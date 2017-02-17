@@ -1,0 +1,47 @@
+<header>
+  <h1 class="liner">Liner</h1>
+  <div>
+    <h2>Simple Tron LightCycle demonstrating Firebase-Realtime-Database</h2>
+    <h3>Created by Nick Winger 2017</h3>
+  </div>
+</header>
+
+<div *ngIf="isLoggedIn">
+  <div class="row topPanel">
+    <div class="column">
+      <button type="button" (click)="joinLobby('default')" *ngIf="!rootModel.currentLobby">Join default lobby</button>
+      <button type="button" (click)="start()" *ngIf="rootModel.currentLobby">Start</button>
+    </div>
+    <div class="messages" *ngIf="rootModel.currentLobby">
+      <fieldset class="column">
+        <legend>Messages</legend>
+        <div #scrollContainer class="scrollContainer">
+          <p [style.color]="message?.color" *ngFor="let message of rootModel.currentLobby.messages.slice().reverse()">{{message.text}}</p>
+        </div>
+      </fieldset>
+      <div class="input">
+        Message:&nbsp;<input type="text" (keyup.enter)="onEnterMessage($event)" />
+      </div>
+    </div>
+    <!--<div class="column" id="lobbyUsers" *ngIf="rootModel.currentLobby">
+      <p *ngFor="let user of rootModel?.currentLobby.users">{{user.name}}</p>
+    </div>-->
+    <fieldset class="column" id="lobbyUsers" *ngIf="rootModel.currentLobby">
+      <legend>Users in Lobby</legend>
+      <p *ngFor="let user of rootModel?.currentLobby.users">{{user.name}}</p>
+    </fieldset>
+  </div>
+
+  <!-- <canvas #ctx width="500" height="500" id="mycanvas"></canvas> -->
+  <svg *ngIf="rootModel.currentGame" width="500" height="500" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+    <g *ngFor="let player of rootModel.currentGame.players">
+      <line [attr.x1]="line.x1" [attr.y1]="line.y1" [attr.x2]="line.x2" [attr.y2]="line.y2" stroke-width="1" [attr.stroke]="player.colorString" *ngFor="let line of player.lines"/>
+      <line [attr.x1]="player.currentLine.x1" [attr.y1]="player.currentLine.y1" [attr.x2]="player.currentLine.x2" [attr.y2]="player.currentLine.y2" stroke-width="1" [attr.stroke]="player.colorString"/>
+    </g>
+  </svg>
+</div>
+
+<div *ngIf="!isLoggedIn">
+  <button type="button" (click)="loginGoogle()">Mit Google einloggen</button>
+  <button type="button" (click)="loginAnonym()">Anonym einloggen</button>
+</div>

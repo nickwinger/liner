@@ -1,0 +1,73 @@
+
+h1.liner {
+  font-size: 6em;
+  margin: 0;
+}
+
+h2, h3 {
+  margin: 0;
+}
+
+header {
+  display: flex;
+  align-items: center;
+}
+
+header > div {
+  margin-left: 50px;
+}
+
+div[top] {
+}
+
+.messages {
+  min-width: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.messages .input {
+  display: flex;
+  align-items: baseline;
+}
+
+.messages .input input {
+  flex: 1;
+}
+.messages fieldset .scrollContainer {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.messages fieldset {
+  flex: 1;
+  margin: 0 0 10px 0;
+}
+
+fieldset {
+  border: 1px solid lightgrey;
+  margin-left: 20px;
+}
+
+.topPanel {
+  justify-content: space-between;
+  margin: 10px;
+  min-height: 200px;
+}
+
+.row {
+  display: flex;
+}
+
+#textOutput {
+  overflow-y: auto;
+  min-width: 300px;
+  margin-left: 50px;
+  border: 1px solid lightgrey;
+  padding: 5px;
+}
+
+#mycanvas {
+  text-align: center;
+  border: 5px solid black;
+}

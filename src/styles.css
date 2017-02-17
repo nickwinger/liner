@@ -1,0 +1,19 @@
+/* You can add global styles to this file, and also import other style files */
+
+
+
+body {
+  overflow: hidden;
+  font-family: monospace;
+}
+
+p {
+  margin: 5px 0;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: lightblue;
+  font-size: 2em;
+  font-weight: bold;
+}
