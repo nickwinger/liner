@@ -19,5 +19,6 @@ export class RootModel {
 
   constructor() {
     this.currentLobbySubject = new BehaviorSubject<Lobby>(undefined);
+    this.currentGame = new Game();
   }
 }

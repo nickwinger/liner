@@ -1,10 +1,18 @@
 /* You can add global styles to this file, and also import other style files */
-
+@import 'styles/neon.css';
 
 
 body {
+  color: white;
   overflow: hidden;
   font-family: monospace;
+  background-color: #222222;
+  background: repeating-linear-gradient(45deg, #2b2b2b 0%, #2b2b2b 10%, #222222 0%, #222222 50%) 0 / 15px 15px;
+}
+
+fieldset > legend {
+  font-weight: bold;
+  /*transform: translate(0, -10px);*/
 }
 
 p {
@@ -16,4 +24,8 @@ button {
   background-color: lightblue;
   font-size: 2em;
   font-weight: bold;
+}
+
+button.neon {
+  background-color: transparent;
 }

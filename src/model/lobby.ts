@@ -10,9 +10,9 @@ export class Lobby {
 
   messagesSubject: BehaviorSubject<string>;
 
-  constructor() {
+  constructor(name: string) {
     this.messagesSubject = new BehaviorSubject<string>(undefined);
-    this.name = '';
+    this.name = name;
     this.users = [];
     this.messages = [];
 
@@ -21,15 +21,14 @@ export class Lobby {
         this.messages = [];
       else
         this.messages.unshift(msg);
+
+      // Immutable (to trigger angular2)
+      // this.messages = this.messages.slice();
     });
   }
 
   static fromJson(json): Lobby {
-    var ret = new Lobby();
-
-    ret.name = json.name;
-
-    return ret;
+    return new Lobby(json.name);
   }
 
   private _user: firebase.User;

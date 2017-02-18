@@ -4,13 +4,15 @@ import {RootModel} from "../model/root";
 import {Game} from "../model/game";
 import {Player, Line} from "../model/player";
 import {IVector} from "../model/interfaces";
-import {Direction} from "../model/enums";
+import {Direction, Colors} from "../model/enums";
+import {LobbyManager} from "./lobbyManager";
+import {LobbiesRepository} from "./lobbiesRepository";
 
 @Injectable()
 export class GameManager {
   private lobbyGameRef: firebase.database.Reference;
 
-  constructor(protected rootModel: RootModel) {
+  constructor(protected rootModel: RootModel, protected lobbyManager: LobbyManager, protected lobbiesRepository: LobbiesRepository) {
 
     rootModel.currentLobbyObservable.subscribe(() => {
       if (!this.rootModel.currentLobby)
@@ -19,7 +21,7 @@ export class GameManager {
       if (this.lobbyGameRef)
         this.lobbyGameRef.off('value');
 
-      this.lobbyGameRef = firebase.database().ref('lobbies/' + rootModel.currentLobby.name + '/game');
+      this.lobbyGameRef = lobbiesRepository.ref('game');
       this.lobbyGameRef.on('value', (game) => {
         if (!game.exists())
           return;
@@ -43,9 +45,11 @@ export class GameManager {
   playerTurnRight() {
     if (!this.player.alive)
       return;
-    let currentLine = this.player.currentLine;
+
+    let currentLine = this.player.currentLine.clone();
+    currentLine.dir = this.player.dir;
     this.player.turnRight();
-console.log('currentline', currentLine, this.player.pos);
+
     this.addLine(currentLine, this.player.dir);
     //this.addVector(this.player.vector);
   }
@@ -54,7 +58,8 @@ console.log('currentline', currentLine, this.player.pos);
     if (!this.player.alive)
       return;
 
-    let currentLine = this.player.currentLine;
+    let currentLine = this.player.currentLine.clone();
+    currentLine.dir = this.player.dir;
     this.player.turnLeft();
 
     this.addLine(currentLine, this.player.dir);
@@ -69,46 +74,44 @@ console.log('currentline', currentLine, this.player.pos);
     if (!userId)
       userId = this.user.uid;
 
-    firebase.database().ref('lobbies/' + this.rootModel.currentLobby.name + '/lines').push({
-      x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2, dir: dir, userId: userId
+    this.lobbiesRepository.push('lines', {
+      line: line, dir: dir, userId: userId
     });
   }
 
-  addVector(vector: IVector, userId?: string) {
-    if (!userId)
-      userId = this.user.uid;
-
-    firebase.database().ref('lobbies/' + this.rootModel.currentLobby.name + '/vectors').push({
-      x: vector.x, y: vector.y, dir: vector.dir, userId: userId
-    });
-  }
-
-  newGame() {
+  newGame(fps: number) {
     let game = new Game();
+    game.fps = fps;
 
     // Delete any vectors in lobby
-    firebase.database().ref('lobbies/' + this.rootModel.currentLobby.name + '/vectors').remove();
+    console.log('cleaning up vectors from lobby');
+    this.lobbiesRepository.remove('lines');
 
-    firebase.database().ref('lobbies/' + this.rootModel.currentLobby.name + '/users').once('value', (snapshot) => {
+    this.lobbiesRepository.once('users', 'value', (snapshot) => {
       snapshot.forEach((userSnapshot) => {
         let user = userSnapshot.val();
 
+        let abstand = 20;
         let player = new Player();
         player.name = user.name;
         player.id = user.uid;
+        player.color = Colors[user.colorId];
         player.alive = true;
-        player.setPos(this.random(50, this.rootModel.rasterSize.width - 50), this.random(50, this.rootModel.rasterSize.height - 50));
+        player.setPos(this.random(abstand, this.rootModel.rasterSize.width - abstand), this.random(abstand, this.rootModel.rasterSize.height - abstand));
         player.dir = this.random(0, 3);
         //this.addVector(player.vector, user.uid);
         game.players.push(player);
 
+        console.log('adding ' + user.name + ' as a player', player);
+
         return false;
       });
-
-      firebase.database().ref('lobbies/' + this.rootModel.currentLobby.name + '/game').set(game);
-      setTimeout(() => {
-        firebase.database().ref('lobbies/' + this.rootModel.currentLobby.name + '/events/start').set(true);
-      }, 2000);
     });
+
+    console.log('broadcast game ', game);
+    this.lobbiesRepository.set('game', game);
+    setTimeout(() => {
+      this.lobbyManager.sendEvent('start', true);
+    }, 1000);
   }
 }

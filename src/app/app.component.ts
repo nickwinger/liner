@@ -1,5 +1,4 @@
 import {Component, HostListener, ViewChild, ElementRef, ChangeDetectorRef} from '@angular/core';
-import {StateService} from "../services/stateService";
 import * as firebase from "firebase";
 import {LobbyManager} from "../services/lobbyManager";
 import {IMessage} from "../model/interfaces";
@@ -16,12 +15,18 @@ import {Direction} from "../model/enums";
 })
 export class AppComponent {
   @ViewChild('scrollContainer') scrollContainer: ElementRef;
+  fps: number;
+  fpsOptions: number[];
 
-  constructor(public state: StateService, public lobbyManager: LobbyManager,
+  constructor(public lobbyManager: LobbyManager,
             public messageService: MessageService, public gameManager: GameManager,
           public rootModel: RootModel, public gameLoop: GameLoop, protected changeRef: ChangeDetectorRef) {
-
+    rootModel.rasterSize = {width: 250, height: 250 };
+    this.fpsOptions = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
+    this.fps = 60;
   }
+
+  get viewBox(): string { return '0 0 ' + this.rootModel.rasterSize.width + ' ' + this.rootModel.rasterSize.height; }
 
   private _user: firebase.User;
   get user(): firebase.User {
@@ -31,13 +36,17 @@ export class AppComponent {
     return this._user;
   }
 
+  onFpsChange(fps) {
+    this.fps = fps;
+  }
+
   onEnterMessage(event: KeyboardEvent) {
     var inputField = <HTMLInputElement>event.target;
     this.lobbyManager.writeLn(this.rootModel.currentLobby.me.name + ' - ' + inputField.value, this.rootModel.currentLobby.me.color);
     inputField.value = '';
   }
 
-  @HostListener('window:keydown', ['$event'])
+  @HostListener('window:keyup', ['$event'])
   keyboardInput(event: KeyboardEvent) {
     switch (event.keyCode) {
       case 38: // Up
@@ -45,11 +54,11 @@ export class AppComponent {
       case 40:  // Down
         break;
       case 37:  // Left
-        if (this.rootModel.currentGame)
+        if (this.rootModel.currentGame.isRunning)
           this.gameManager.playerTurnLeft();
         break;
       case 39:  // Right
-        if (this.rootModel.currentGame)
+        if (this.rootModel.currentGame.isRunning)
           this.gameManager.playerTurnRight();
         break;
     }
@@ -62,17 +71,22 @@ export class AppComponent {
     //return event.returnValue;
   }
 
+  @HostListener('document:click', ['$event'])
+  documentClick(event: MouseEvent) {/*
+    if (event.clientX < window.innerWidth / 2) {
+      if (this.rootModel.currentGame.isRunning)
+        this.gameManager.playerTurnLeft();
+    } else {
+      if (this.rootModel.currentGame.isRunning)
+        this.gameManager.playerTurnRight();
+    }*/
+  }
+
   get isLoggedIn(): boolean {
-    return this.state.user && this.state.user != null;
+    return this.user && this.user != null;
   }
 
   joinLobby(name: string) {
-
-    this.rootModel.rasterSize = {
-      width: 500,
-      height: 500
-    };
-
     this.lobbyManager.join(name);
   }
 
@@ -108,7 +122,7 @@ export class AppComponent {
 
   start() {
 
-    this.gameManager.newGame();
+    this.gameManager.newGame(this.fps);
   }
 
   ngAfterViewInit() {
@@ -118,9 +132,10 @@ export class AppComponent {
         return;
 
       this.rootModel.currentLobby.messagesSubject.subscribe(() => {
-        this.changeRef.markForCheck();
+
         setTimeout(() => {
-          this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
+          if (this.scrollContainer)
+            this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
         }, 10);
       });
     });

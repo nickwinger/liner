@@ -1,15 +1,20 @@
 import {Direction} from "./enums";
 import {IVector, IPoint} from "./interfaces";
 
-export class Color {
-  constructor(public r: number, public g: number, public b: number) {
+export class Line {
+  constructor(public x1?: number, public y1?: number, public x2?: number, public y2?: number, public dir?: Direction) {
 
   }
-}
 
-export class Line {
-  constructor(public x1: number, public y1: number, public x2: number, public y2: number) {
+  static fromJson(json) {
+    if (!json)
+      return new Line();
 
+    return new Line(json.x1, json.y1, json.x2, json.y2, json.dir);
+  }
+
+  clone() {
+    return new Line(this.x1, this.y1, this.x2, this.y2, this.dir);
   }
 }
 
@@ -25,7 +30,7 @@ export class Player {
   alive: boolean;
   dir: Direction;
   name: string;
-  color: Color;
+  color: string;
   id: any;
   lines: Line[];
 
@@ -36,13 +41,10 @@ export class Player {
     this.alive = false;
     this.dir = Direction.Down;
     this.name = 'NONAME';
-    this.color = new Color(128, 0, 0);
     this.id = -1;
   }
 
-  get currentLine(): Line { return new Line(this._prevPos.x, this._prevPos.y, this._pos.x, this._pos.y); }
-
-  get colorString(): string { return "rgba("+this.color.r+","+this.color.g+","+this.color.b+",255)"; }
+  get currentLine(): Line { return new Line(this._prevPos.x, this._prevPos.y, this._pos.x, this._pos.y, this.dir); }
 
   get pos(): IPoint { return {x: this._pos.x, y: this._pos.y }; }
   get prevPos(): IPoint { return {x: this._prevPos.x, y: this._prevPos.y }; }
@@ -133,7 +135,7 @@ export class Player {
     ret.alive = json.alive;
     ret.dir = json.dir;
     ret.name = json.name;
-    ret.color = new Color(json.color.r, json.color.g, json.color.b);
+    ret.color = json.color;
     ret.id = json.id;
 
     return ret;

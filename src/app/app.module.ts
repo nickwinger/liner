@@ -5,7 +5,6 @@ import { HttpModule } from '@angular/http';
 
 import { AppComponent } from './app.component';
 import {FirebaseService} from "../services/firebaseService";
-import {StateService} from "../services/stateService";
 import {GameLoop} from "../logic/gameLoop";
 import {LobbyManager} from "../services/lobbyManager";
 import {MessageService} from "../services/messageService";
@@ -13,6 +12,8 @@ import {GameManager} from "../services/gameManager";
 import {RootModel} from "../model/root";
 import * as firebase from "firebase";
 import {ReversePipe} from "../pipes/reversePipe";
+import {PlayerLine} from "../directives/playerLine";
+import {LobbiesRepository} from "../services/lobbiesRepository";
 
 var config = {
   apiKey: "AIzaSyBjlIv01oUjaN-SPiv6KY-Rxd3ILO0D478",
@@ -25,14 +26,14 @@ firebase.initializeApp(config);
 
 @NgModule({
   declarations: [
-    AppComponent, ReversePipe
+    AppComponent, ReversePipe, PlayerLine
   ],
   imports: [
     BrowserModule,
     FormsModule,
     HttpModule
   ],
-  providers: [FirebaseService, GameLoop, StateService, LobbyManager, MessageService, GameManager, RootModel],
+  providers: [FirebaseService, GameLoop, LobbyManager, MessageService, GameManager, RootModel, LobbiesRepository],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -1,7 +1,7 @@
 <header>
-  <h1 class="liner">Liner</h1>
+  <h1 class="liner neon blue">Liner</h1>
   <div>
-    <h2>Simple Tron LightCycle demonstrating Firebase-Realtime-Database</h2>
+    <h2>Tron LightCycle MultiplayerGame demonstrating Firebase-Realtime-Database</h2>
     <h3>Created by Nick Winger 2017</h3>
   </div>
 </header>
@@ -9,8 +9,16 @@
 <div *ngIf="isLoggedIn">
   <div class="row topPanel">
     <div class="column">
-      <button type="button" (click)="joinLobby('default')" *ngIf="!rootModel.currentLobby">Join default lobby</button>
-      <button type="button" (click)="start()" *ngIf="rootModel.currentLobby">Start</button>
+      <button class="neon green hoverOut" type="button" (click)="joinLobby('default')" *ngIf="!rootModel.currentLobby">Join default lobby</button>
+      <div class="gameSetup" *ngIf="rootModel.currentLobby && !rootModel.currentGame?.isRunning">
+        <button class="neon green hoverOut" type="button" (click)="start()">Start</button>
+        <fieldset>
+          <legend>Game-Speed</legend>
+          <select [ngModel]="fps" (ngModelChange)="onFpsChange($event)" name="fps">
+            <option [value]="i" *ngFor="let i of fpsOptions">{{i}}</option>
+          </select>
+        </fieldset>
+      </div>
     </div>
     <div class="messages" *ngIf="rootModel.currentLobby">
       <fieldset class="column">
@@ -23,25 +31,31 @@
         Message:&nbsp;<input type="text" (keyup.enter)="onEnterMessage($event)" />
       </div>
     </div>
-    <!--<div class="column" id="lobbyUsers" *ngIf="rootModel.currentLobby">
-      <p *ngFor="let user of rootModel?.currentLobby.users">{{user.name}}</p>
-    </div>-->
     <fieldset class="column" id="lobbyUsers" *ngIf="rootModel.currentLobby">
       <legend>Users in Lobby</legend>
-      <p *ngFor="let user of rootModel?.currentLobby.users">{{user.name}}</p>
+      <div class="scrollContainer">
+        <p *ngFor="let user of rootModel?.currentLobby.users" [style.color]="user.color">{{user.name}}</p>
+      </div>
     </fieldset>
   </div>
 
-  <!-- <canvas #ctx width="500" height="500" id="mycanvas"></canvas> -->
-  <svg *ngIf="rootModel.currentGame" width="500" height="500" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
-    <g *ngFor="let player of rootModel.currentGame.players">
-      <line [attr.x1]="line.x1" [attr.y1]="line.y1" [attr.x2]="line.x2" [attr.y2]="line.y2" stroke-width="1" [attr.stroke]="player.colorString" *ngFor="let line of player.lines"/>
-      <line [attr.x1]="player.currentLine.x1" [attr.y1]="player.currentLine.y1" [attr.x2]="player.currentLine.x2" [attr.y2]="player.currentLine.y2" stroke-width="1" [attr.stroke]="player.colorString"/>
-    </g>
-  </svg>
+  <div class="gameContainer">
+    <svg *ngIf="rootModel.currentLobby" width="500" height="500" [attr.viewBox]="viewBox" preserveAspectRatio="meet" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="glow" x="-2" y="-2" width="200" height="200">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" />
+        </filter>
+      </defs>
+
+      <g *ngFor="let player of rootModel.currentGame?.players">
+        <line [playerLine]="line" stroke-width="1" [attr.stroke]="player.color" *ngFor="let line of player.lines"/>
+        <line [playerLine]="player.currentLine" stroke-width="1" [attr.stroke]="player.color"/>
+      </g>
+    </svg>
+  </div>
 </div>
 
 <div *ngIf="!isLoggedIn">
-  <button type="button" (click)="loginGoogle()">Mit Google einloggen</button>
-  <button type="button" (click)="loginAnonym()">Anonym einloggen</button>
+  <button class="neon green hoverOut" type="button" (click)="loginGoogle()">Mit Google einloggen</button>
+  <button class="neon green hoverOut" type="button" (click)="loginAnonym()">Anonym einloggen</button>
 </div>

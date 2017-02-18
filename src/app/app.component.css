@@ -34,14 +34,27 @@ div[top] {
 .messages .input input {
   flex: 1;
 }
-.messages fieldset .scrollContainer {
+fieldset .scrollContainer {
   max-height: 200px;
   overflow-y: auto;
+  background-color: white;
 }
 
 .messages fieldset {
   flex: 1;
   margin: 0 0 10px 0;
+}
+
+.gameContainer {
+  display: flex;
+  flex-direction: column;
+  margin: 50px;
+  align-items: center;
+}
+
+.gameContainer svg {
+  border: 1px solid black;
+  background-color: white;
 }
 
 fieldset {

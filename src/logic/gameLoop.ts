@@ -1,33 +1,49 @@
 import * as firebase from "firebase";
 import {Injectable} from "@angular/core";
-import {StateService} from "../services/stateService";
-import {Direction} from "../model/enums";
-import {Player, Color, Line} from "../model/player";
+import {Player, Line} from "../model/player";
 import {RootModel} from "../model/root";
 import {MessageService} from "../services/messageService";
-import {IVector} from "../model/interfaces";
 import {LobbyManager} from "../services/lobbyManager";
+import {LobbiesRepository} from "../services/lobbiesRepository";
+import {Game} from "../model/game";
 
 @Injectable()
 export class GameLoop {
   timer;
   private lobbyEventStartRef;
+  private lobbyEventPlayerDiedRef;
   private playerVectorsRef;
 
-  constructor(protected state: StateService, protected rootModel: RootModel, protected messageService: MessageService,
-            protected lobbyManager: LobbyManager) {
+  constructor(protected rootModel: RootModel, protected messageService: MessageService,
+            protected lobbyManager: LobbyManager, protected lobbiesRepository: LobbiesRepository) {
     rootModel.currentLobbyObservable.subscribe(() => {
       if (!this.rootModel.currentLobby)
         return;
 
+      if (this.playerVectorsRef)
+        this.playerVectorsRef.off('child_added');
+
       if (this.lobbyEventStartRef)
         this.lobbyEventStartRef.off('value');
 
-      this.lobbyEventStartRef = firebase.database().ref('lobbies/' + this.rootModel.currentLobby.name + '/events/start');
+      this.lobbyEventStartRef = lobbiesRepository.ref('events/start');
       this.lobbyEventStartRef.on('value', (start) => {
-        console.log('received START', start.val());
-        if (start.val())
-          this.start();
+        if (!start.val() || start.val() == null)
+          return;
+
+        console.log('game start');
+        this.start();
+      });
+
+      if (this.lobbyEventPlayerDiedRef)
+        this.lobbyEventPlayerDiedRef.off('value');
+      this.lobbyEventPlayerDiedRef = lobbiesRepository.ref('events/playerDied');
+      this.lobbyEventPlayerDiedRef.on('value', (playerDied) => {
+        if (!playerDied.val() || playerDied.val() == null)
+          return;
+
+        console.log('player died ', playerDied.val());
+        this.rootModel.currentGame.getPlayerById(playerDied.val()).alive = false;
       });
     });
   }
@@ -40,18 +56,19 @@ export class GameLoop {
     return this._user;
   }
 
-  get player(): Player { return this.state.player; }
-
   stop() {
-    if (this.playerVectorsRef)
-      this.playerVectorsRef.off('value');
+    if (this.playerVectorsRef) {
+      this.playerVectorsRef.off('child_added');
+    }
+    this.lobbiesRepository.remove('game');
 
     clearInterval(this.timer);
   }
 
   setPlayerDead(player: Player) {
     player.alive = false;
-    this.lobbyManager.writeLn('Player ' + player.name + ' crashed', player.colorString);
+    this.lobbyManager.writeLn('Player ' + player.name + ' crashed', player.color);
+    this.lobbyManager.sendEvent('playerDied', player.id);
   }
 
   isLineIntersect(x1,y1,x2,y2, x3,y3,x4,y4): boolean {
@@ -103,99 +120,47 @@ export class GameLoop {
   }
 
   updateGame() {
+    if (!this.rootModel.currentGame.isRunning) {
+      console.log('stopping game', this.rootModel.currentGame);
+      this.stop();
+      return;
+    }
+
     this.rootModel.currentGame.players.forEach((player) => {
       if (player.alive) {
         player.move();
 
         // Only check alive condition for ourselves
         if (player.id == this.user.uid) {
-          if (player.pos.y <= 0 || player.pos.y >= this.state.rasterHeight || player.pos.x <= 0 || player.pos.x >= this.state.rasterWidth)
+          if (player.pos.y <= 0 || player.pos.y >= this.rootModel.rasterSize.height || player.pos.x <= 0 || player.pos.x >= this.rootModel.rasterSize.width)
             this.setPlayerDead(player);
 
           if (this.isCurrentPlayerLineIntersectingOther())
             this.setPlayerDead(player);
         }
-
-
       }
     });
   }
 
-  redrawFromSnapshot(snapshot: firebase.database.DataSnapshot) {
-    snapshot.forEach((playerVectorsSnapshot: firebase.database.DataSnapshot) => {
-      let player = this.rootModel.currentGame.getPlayerById(playerVectorsSnapshot.key);
-      player.lines = [];
-      let count = 0;
-      let prevVector;
-
-      playerVectorsSnapshot.forEach((vectorSnapshot: firebase.database.DataSnapshot) => {
-        let vector = <IVector>vectorSnapshot.val();
-
-        if (count == 0)
-          prevVector = vector;
-        else {
-          player.lines.push(new Line(prevVector.x, prevVector.y, vector.x, vector.y));
-          prevVector = vector;
-        }
-
-        count++;
-        return false;
-      });
-
-      return false;
-    });
-  }
-
-  updatePlayerPosFromSnapshot(snapshot: firebase.database.DataSnapshot) {
-    snapshot.forEach((playerVectorsSnapshot: firebase.database.DataSnapshot) => {
-      let player = this.rootModel.currentGame.getPlayerById(playerVectorsSnapshot.key);
-      let count = 0;
-
-      playerVectorsSnapshot.forEach((vectorSnapshot: firebase.database.DataSnapshot) => {
-        let vector = <IVector>vectorSnapshot.val();
-        if (count == playerVectorsSnapshot.numChildren() - 1) {
-          player.setPos(vector.x, vector.y);
-        }
-
-        count++;
-        return false;
-      });
-
-      return false;
-    });
-  }
+  get currentGame(): Game { return this.rootModel.currentGame; }
+  set currentGame(value: Game) { this.rootModel.currentGame = value; }
 
   start() {
-    /*
-    this.playerVectorsRef = firebase.database().ref('lobbies/' + this.rootModel.currentLobby.name + '/vectors');
-    this.playerVectorsRef.on('value', (snapshot: firebase.database.DataSnapshot) => {
-      console.log('vectors changed', snapshot.val());
-      this.redrawFromSnapshot(snapshot);
-      this.updatePlayerPosFromSnapshot(snapshot);
-    });*/
-
-    this.playerVectorsRef = firebase.database().ref('lobbies/' + this.rootModel.currentLobby.name + '/lines');
+    this.playerVectorsRef = this.lobbiesRepository.ref('lines');
     this.playerVectorsRef.on('child_added', (snapshot: firebase.database.DataSnapshot) => {
       var userVector = snapshot.val();
 
-      console.log('vectors changed', snapshot.val());
-      let player = this.rootModel.currentGame.getPlayerById(userVector.userId);
-      player.lines.push(new Line(userVector.x1, userVector.y1, userVector.x2, userVector.y2));
-      player.setPos(userVector.x2, userVector.y2);
+      let player = this.currentGame.getPlayerById(userVector.userId);
+      player.lines.push(Line.fromJson(userVector.line));
+      player.setPos(userVector.line.x2, userVector.line.y2);
       player.dir = userVector.dir;
-
-      //this.redrawFromSnapshot(snapshot);
-      //this.updatePlayerPosFromSnapshot(snapshot);
     });
 
-    var gameFps = 10;
-
-    var loops = 0, skipTicks = 1000 / gameFps,
+    var loops = 0, skipTicks = 1000 / this.currentGame.fps,
       maxFrameSkip = 10,
       nextGameTick = (new Date).getTime();
 
     this.timer = setInterval(() => {
-
       loops = 0;
 
       while ((new Date).getTime() > nextGameTick && loops < maxFrameSkip) {
@@ -204,25 +169,6 @@ export class GameLoop {
         nextGameTick += skipTicks;
         loops++;
       }
-
     }, 0);
-
-
-
-/*        var pixel = getPixel(player.x, player.y);
-        if (pixel.r != 255 || pixel.g != 255 || pixel.b != 255)
-          player.alive = false;*/
-
-        //drawPlayer(player);
-
-
-        /*if (!player.alive)
-          printLn('Player dead');*/
-
-//        firebase.database().ref('players/' + this.player.id).set(this.player);
-        // firebase.database().ref('state').set(state);
-
-
-
   }
 }
