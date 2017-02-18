@@ -20,13 +20,6 @@ export class LobbyManager {
     this.killDeadLobbies();
 
     var lobbiesRef = firebase.database().ref('lobbies');
-    /*lobbiesRef.once('value', (lobbiesSnapshot) => {
-      console.log('lobbies', lobbiesSnapshot.val(), lobbiesSnapshot.exists(), lobbiesSnapshot.hasChildren());
-      lobbiesSnapshot.forEach((lobbySnapshot) => {
-        this.lobbies.push(Lobby.fromJson(lobbySnapshot.val()));
-        return false;
-      });
-    });*/
 
     lobbiesRef.on('child_added', (lobby) => {
       console.log('lobby added', lobby.val());
@@ -42,7 +35,7 @@ export class LobbyManager {
       lobbiesSnapshot.forEach((lobbySnapshot) => {
         firebase.database().ref('lobbies/' + lobbiesSnapshot.key + '/users').once('value', (usersSnapshot) => {
           if (!usersSnapshot.exists() || usersSnapshot.numChildren() == 0)
-            firebase.database().ref('lobbies/' + lobbiesSnapshot.key).remove();
+            firebase.database().ref('lobbies/' + lobbySnapshot.key).remove();
         });
         return false;
       });
@@ -60,20 +53,20 @@ export class LobbyManager {
   get currentLobby(): Lobby { return this.rootModel.currentLobby; }
   set currentLobby(value: Lobby) { this.rootModel.currentLobby = value; }
 
-  leaveLobby() {console.log('unload', this.currentLobby);
+  leaveLobby() {
     if (!this.currentLobby)
       return;
 
-    if (this.newUsersRef)
-      this.newUsersRef.off('child_added');
-    if (this.lobbyMessagesRef)
-      this.lobbyMessagesRef.off('value');
+    // In a running game set our player dead
+    if (this.rootModel.currentGame.isRunning&& this.rootModel.currentGame.me.alive)
+      this.sendEvent('playerDied', this.rootModel.currentGame.me.id);
+
+    this.removeListeners();
 
     var s = 'lobbies/' + this.currentLobby.name + '/users/' + this.user.uid;
-    firebase.database().ref(s).remove((err) => {console.log('removed', err);
+    firebase.database().ref(s).remove((err) => {
       // if lobby is empty delete it
       firebase.database().ref('lobbies/' + this.currentLobby.name + '/users').once('value', (snapshot) => {
-        console.log('users left', snapshot.exists(), snapshot.hasChildren());
         if (!snapshot.hasChildren())
           firebase.database().ref('lobbies/' + this.currentLobby.name).remove();
       });
@@ -106,13 +99,19 @@ export class LobbyManager {
     }, 1000);
   }
 
+  removeListeners() {
+    if (this.newUsersRef) {
+      this.newUsersRef.off('child_added');
+      this.newUsersRef.off('child_removed');
+    }
+    if (this.lobbyMessagesRef)
+      this.lobbyMessagesRef.off('value');
+  }
+
   join(name: string) {
     this.currentLobby = new Lobby(name);
 
-    if (this.newUsersRef)
-      this.newUsersRef.off('child_added');
-    if (this.lobbyMessagesRef)
-      this.lobbyMessagesRef.off('value');
+    this.removeListeners();
 
     // Listen for new users
     this.newUsersRef = this.lobbiesRepository.ref('users');
@@ -121,6 +120,13 @@ export class LobbyManager {
       this.writeLn(user.name + ' joined the lobby', user.color);
 
       this.currentLobby.users.push(user);
+    });
+
+    this.newUsersRef.on('child_removed', (userJson) => {
+      let user = LobbyUser.fromJson(userJson.val());
+      this.writeLn(user.name + ' left the lobby', user.color);
+
+      this.currentLobby.removeUser(user.uid);
     });
 
     var name = this.user.displayName;

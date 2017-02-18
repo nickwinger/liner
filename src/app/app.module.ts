@@ -14,6 +14,7 @@ import * as firebase from "firebase";
 import {ReversePipe} from "../pipes/reversePipe";
 import {PlayerLine} from "../directives/playerLine";
 import {LobbiesRepository} from "../services/lobbiesRepository";
+import {GameScreen} from "../component/gameScreen";
 
 var config = {
   apiKey: "AIzaSyBjlIv01oUjaN-SPiv6KY-Rxd3ILO0D478",
@@ -26,7 +27,7 @@ firebase.initializeApp(config);
 
 @NgModule({
   declarations: [
-    AppComponent, ReversePipe, PlayerLine
+    AppComponent, ReversePipe, PlayerLine, GameScreen
   ],
   imports: [
     BrowserModule,

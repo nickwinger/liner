@@ -1,0 +1,23 @@
+<div class="left">
+  <svg width="150" height="150" [attr.viewBox]="currentGame.viewBox" style="outline: 5px solid lightblue;" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+    <line [attr.x1]="line.x1" [attr.y1]="line.y1" [attr.x2]="line.x2" [attr.y2]="line.y2" stroke-width="2" stroke="#000" *ngFor="let line of rootModel.currentGame.lines"/>
+
+    <g *ngFor="let player of rootModel.currentGame?.players">
+      <line [playerLine]="line" stroke-width="1" [attr.stroke]="player.color" *ngFor="let line of player.lines"/>
+      <line [playerLine]="player.currentLine" stroke-width="1" [attr.stroke]="player.color"/>
+    </g>
+  </svg>
+</div>
+<div #rightDiv class="right">
+  <svg #canvas width="500" height="500" style="outline: 5px solid lightblue;" [attr.viewBox]="getViewBox()" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+    <g [style.transform]="svgTransform">
+      <line [attr.x1]="line.x1" [attr.y1]="line.y1" [attr.x2]="line.x2" [attr.y2]="line.y2" stroke-width="2" stroke="#000" *ngFor="let line of rootModel.currentGame.lines"/>
+
+      <g *ngFor="let player of rootModel.currentGame?.players">
+        <line [playerLine]="line" stroke-width="1" [attr.stroke]="player.color" *ngFor="let line of player.lines"/>
+        <line [playerLine]="player.currentLine" stroke-width="1" [attr.stroke]="player.color"/>
+      </g>
+    </g>
+  </svg>
+</div>
+

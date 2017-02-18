@@ -15,6 +15,7 @@ import {Direction} from "../model/enums";
 })
 export class AppComponent {
   @ViewChild('scrollContainer') scrollContainer: ElementRef;
+
   fps: number;
   fpsOptions: number[];
 
@@ -24,6 +25,9 @@ export class AppComponent {
     rootModel.rasterSize = {width: 250, height: 250 };
     this.fpsOptions = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
     this.fps = 60;
+    window['$ctx'] = {
+      rootModel: rootModel
+    };
   }
 
   get viewBox(): string { return '0 0 ' + this.rootModel.rasterSize.width + ' ' + this.rootModel.rasterSize.height; }
@@ -71,15 +75,15 @@ export class AppComponent {
     //return event.returnValue;
   }
 
-  @HostListener('document:click', ['$event'])
-  documentClick(event: MouseEvent) {/*
-    if (event.clientX < window.innerWidth / 2) {
+  @HostListener('document:touchstart', ['$event'])
+  documentClick(event: TouchEvent) {
+    if (event.touches[0].clientX < window.innerWidth / 2) {
       if (this.rootModel.currentGame.isRunning)
         this.gameManager.playerTurnLeft();
     } else {
       if (this.rootModel.currentGame.isRunning)
         this.gameManager.playerTurnRight();
-    }*/
+    }
   }
 
   get isLoggedIn(): boolean {
@@ -88,6 +92,10 @@ export class AppComponent {
 
   joinLobby(name: string) {
     this.lobbyManager.join(name);
+  }
+
+  leaveLobby() {
+    this.lobbyManager.leaveLobby();
   }
 
   loginAnonym() {

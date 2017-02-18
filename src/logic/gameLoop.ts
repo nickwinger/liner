@@ -43,8 +43,9 @@ export class GameLoop {
         if (!playerDied.val() || playerDied.val() == null)
           return;
 
-        console.log('player died ', playerDied.val());
-        this.rootModel.currentGame.getPlayerById(playerDied.val()).alive = false;
+        let player = this.rootModel.currentGame.getPlayerById(playerDied.val());
+        this.lobbyManager.writeLn('Player ' + player.name + ' crashed', player.color);
+        player.alive = false;
       });
     });
   }
@@ -66,9 +67,7 @@ export class GameLoop {
     clearInterval(this.timer);
   }
 
-  setPlayerDead(player: Player) {
-    player.alive = false;
-    this.lobbyManager.writeLn('Player ' + player.name + ' crashed', player.color);
+  setPlayerDead(player: Player) {console.log('Crashed');
     this.lobbyManager.sendEvent('playerDied', player.id);
   }
 
@@ -77,10 +76,8 @@ export class GameLoop {
     var ret = false;
 
     this.rootModel.currentGame.players.forEach((player) => {
-      player.lines.forEach((line) => {
-        if (GameMath.lineIntersect(currentPlayer.currentLine, line))
-          ret = true;
-      });
+      ret = GameMath.linesIntersect(currentPlayer.currentLine, player.lines);
+
       // Also check the currentLine of other players
       if (player.id != this.user.uid && GameMath.lineIntersect(currentPlayer.currentLine, player.currentLine))
         ret = true;
@@ -90,19 +87,19 @@ export class GameLoop {
   }
 
   updateGame() {
-    if (!this.rootModel.currentGame.isRunning) {
+    if (!this.currentGame.isRunning) {
       console.log('stopping game', this.rootModel.currentGame);
       this.stop();
       return;
     }
 
-    this.rootModel.currentGame.players.forEach((player) => {
+    this.currentGame.players.forEach((player) => {
       if (player.alive) {
         player.move();
 
         // Only check alive condition for ourselves
         if (player.id == this.user.uid) {
-          if (player.pos.y <= 0 || player.pos.y >= this.rootModel.rasterSize.height || player.pos.x <= 0 || player.pos.x >= this.rootModel.rasterSize.width)
+          if (GameMath.linesIntersect(player.currentLine, this.currentGame.lines))
             this.setPlayerDead(player);
 
           if (this.isCurrentPlayerLineIntersectingOther())

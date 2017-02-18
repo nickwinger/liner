@@ -97,7 +97,7 @@ export class GameManager {
         player.id = user.uid;
         player.color = Colors[user.colorId];
         player.alive = true;
-        player.setPos(this.random(abstand, this.rootModel.rasterSize.width - abstand), this.random(abstand, this.rootModel.rasterSize.height - abstand));
+        player.setPos(this.random(abstand, game.size.width - abstand), this.random(abstand, game.size.height - abstand));
         player.dir = this.random(0, 3);
         //this.addVector(player.vector, user.uid);
         game.players.push(player);

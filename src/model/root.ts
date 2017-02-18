@@ -7,7 +7,7 @@ import {Lobby} from "./lobby";
 @Injectable()
 export class RootModel {
   rasterSize: ISize;
-
+  state: string;
   currentGame: Game;
 
   private currentLobbySubject: BehaviorSubject<Lobby>;
@@ -20,5 +20,6 @@ export class RootModel {
   constructor() {
     this.currentLobbySubject = new BehaviorSubject<Lobby>(undefined);
     this.currentGame = new Game();
+    this.state = 'none';
   }
 }

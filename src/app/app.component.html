@@ -1,4 +1,4 @@
-<header>
+<header *ngIf="!rootModel.currentGame.isRunning">
   <h1 class="liner neon blue">Liner</h1>
   <div>
     <h2>Tron LightCycle MultiplayerGame demonstrating Firebase-Realtime-Database</h2>
@@ -6,10 +6,14 @@
   </div>
 </header>
 
-<div *ngIf="isLoggedIn">
+<game-screen *ngIf="rootModel.currentGame.isRunning"></game-screen>
+
+<div *ngIf="isLoggedIn && !rootModel.currentGame.isRunning">
   <div class="row topPanel">
     <div class="column">
       <button class="neon green hoverOut" type="button" (click)="joinLobby('default')" *ngIf="!rootModel.currentLobby">Join default lobby</button>
+      <button class="neon green hoverOut" type="button" (click)="leaveLobby()" *ngIf="rootModel.currentLobby">Leave lobby</button>
+
       <div class="gameSetup" *ngIf="rootModel.currentLobby && !rootModel.currentGame?.isRunning">
         <button class="neon green hoverOut" type="button" (click)="start()">Start</button>
         <fieldset>
@@ -54,12 +58,14 @@
         You can try to make other players crash into your line.
       </fieldset>
     </div>
-    <svg width="500" height="500" [attr.viewBox]="viewBox" preserveAspectRatio="meet" xmlns="http://www.w3.org/2000/svg">
+    <svg width="500" height="500" [attr.viewBox]="viewBox" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="glow" x="-2" y="-2" width="200" height="200">
           <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" />
         </filter>
       </defs>
+
+      <line [attr.x1]="line.x1" [attr.y1]="line.y1" [attr.x2]="line.x2" [attr.y2]="line.y2" stroke-width="2" stroke="#000" *ngFor="let line of rootModel.currentGame.lines"/>
 
       <g *ngFor="let player of rootModel.currentGame?.players">
         <line [playerLine]="line" stroke-width="1" [attr.stroke]="player.color" *ngFor="let line of player.lines"/>

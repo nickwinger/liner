@@ -1,8 +1,9 @@
 import {Direction} from "./enums";
 import {IVector, IPoint} from "./interfaces";
+import {BehaviorSubject} from "rxjs";
 
 export class Line {
-  constructor(public x1?: number, public y1?: number, public x2?: number, public y2?: number, public dir?: Direction) {
+  constructor(public x1?: number, public y1?: number, public x2?: number, public y2?: number, public dir: Direction = Direction.None) {
 
   }
 
@@ -34,6 +35,8 @@ export class Player {
   id: any;
   lines: Line[];
 
+  posChanged: BehaviorSubject<IPoint>;
+
   constructor() {
     this.lines = [];
     this._pos = {x: 0, y: 0 };
@@ -42,6 +45,7 @@ export class Player {
     this.dir = Direction.Down;
     this.name = 'NONAME';
     this.id = -1;
+    this.posChanged = new BehaviorSubject<IPoint>(this._pos);
   }
 
   get currentLine(): Line { return new Line(this._prevPos.x, this._prevPos.y, this._pos.x, this._pos.y, this.dir); }
@@ -52,6 +56,8 @@ export class Player {
   setPos(x: number, y: number) {
     this._prevPos = this.pos;
     this._pos = {x: x, y: y};
+
+    this.posChanged.next(this._pos);
 
     if (this._prevPos.x == 0 && this._prevPos.y == 0)
       this._prevPos = {x: x, y: y};
@@ -124,6 +130,7 @@ export class Player {
         this._pos.x++;
         break;
     }
+    this.posChanged.next(this._pos);
   }
 
   static fromJson(json: any): Player {

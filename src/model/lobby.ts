@@ -27,6 +27,10 @@ export class Lobby {
     });
   }
 
+  removeUser(userId: string) {
+    _.remove(this.users, (user: LobbyUser) => user.uid == userId);
+  }
+
   static fromJson(json): Lobby {
     return new Lobby(json.name);
   }

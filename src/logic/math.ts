@@ -34,4 +34,14 @@ export class GameMath {
   static lineIntersect(l1: Line, l2: Line): boolean {
     return this.isLineIntersect(l1.x1, l1.y1, l1.x2, l1.y2, l2.x1, l2.y1, l2.x2, l2.y2);
   }
+
+  static linesIntersect(line: Line, lines: Line[]): boolean {
+    var ret = false;
+    lines.forEach((l) => {
+      if (GameMath.lineIntersect(line, l))
+        ret = true;
+    });
+
+    return ret;
+  }
 }
