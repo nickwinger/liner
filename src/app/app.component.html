@@ -39,8 +39,22 @@
     </fieldset>
   </div>
 
-  <div class="gameContainer">
-    <svg *ngIf="rootModel.currentLobby" width="500" height="500" [attr.viewBox]="viewBox" preserveAspectRatio="meet" xmlns="http://www.w3.org/2000/svg">
+  <div class="gameContainer" *ngIf="rootModel.currentLobby">
+    <div class="gameInfo">
+      <fieldset>
+        <legend>Usage</legend>
+        <ul>
+          <li>Press Left-Cursor Key to turn left</li>
+          <li>Press Right-Cursor Key to turn right</li>
+        </ul>
+      </fieldset>
+      <fieldset>
+        <legend>Goal</legend>
+        The goal is to survive longer than the other players.
+        You can try to make other players crash into your line.
+      </fieldset>
+    </div>
+    <svg width="500" height="500" [attr.viewBox]="viewBox" preserveAspectRatio="meet" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="glow" x="-2" y="-2" width="200" height="200">
           <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" />

@@ -47,9 +47,15 @@ fieldset .scrollContainer {
 
 .gameContainer {
   display: flex;
-  flex-direction: column;
-  margin: 50px;
-  align-items: center;
+  justify-content: space-around;
+  margin-top: 50px;
+}
+
+.gameContainer .gameInfo {
+  max-width: 350px;
+}
+.gameContainer .gameInfo fieldset {
+  margin-bottom: 50px;
 }
 
 .gameContainer svg {

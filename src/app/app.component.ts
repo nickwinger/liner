@@ -46,7 +46,7 @@ export class AppComponent {
     inputField.value = '';
   }
 
-  @HostListener('window:keyup', ['$event'])
+  @HostListener('window:keydown', ['$event'])
   keyboardInput(event: KeyboardEvent) {
     switch (event.keyCode) {
       case 38: // Up

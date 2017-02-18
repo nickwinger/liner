@@ -26,6 +26,10 @@ button {
   font-weight: bold;
 }
 
+button:hover {
+  cursor: pointer;
+}
+
 button.neon {
   background-color: transparent;
 }
